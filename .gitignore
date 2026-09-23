@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+release/
+.env
+*.log
+.DS_Store
+*.exe
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico

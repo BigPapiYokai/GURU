@@ -1,0 +1,80 @@
+{
+  "name": "guru-onchain-intelligence",
+  "private": true,
+  "version": "1.0.4",
+  "description": "GURU — The On-Chain Intelligence Network. Spot the smart money.",
+  "main": "electron/main.cjs",
+  "homepage": "./",
+  "author": "GURU Labs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "electron": "electron .",
+    "electron:build": "npm run build && electron-builder --win --x64",
+    "dist": "npm run build && electron-builder --win --x64 --publish=never"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.99.0",
+    "bs58": "^6.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "electron": "^32.2.0",
+    "electron-builder": "^25.0.5",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vite-plugin-node-polyfills": "^0.28.0"
+  },
+  "build": {
+    "appId": "com.guru.onchain",
+    "productName": "GURU",
+    "npmRebuild": false,
+    "copyright": "© 2026 GURU Labs — SPOT THE SMART MONEY.",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/icon.ico",
+      "build/icon-*.png",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "GURU-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GURU"
+    },
+    "portable": {
+      "artifactName": "GURU-Portable-${version}.${ext}"
+    }
+  }
+}
