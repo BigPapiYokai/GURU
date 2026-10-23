@@ -12,6 +12,7 @@ const NAV = [
   { label:'Alerts', path:'/alerts', icon:'⬢' },
   { label:'AI Analyst', path:'/ai', icon:'◆' },
   { label:'PumpFun', path:'/pumpfun', icon:'🚀' },
+  { label:'Social Monitor', path:'/social-monitor', icon:'📡' },
   { label:'Compare', path:'/compare', icon:'⇄' },
   { label:'Social', path:'/social', icon:'◈' },
 ]
