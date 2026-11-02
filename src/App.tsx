@@ -2,7 +2,7 @@ import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'reac
 import { Navbar, Sidebar } from './components/Navbar'
 import { Home } from './pages/Home'
 import { WalletProfile } from './pages/WalletProfile'
-import { Wallets } from './pages/Wallets'
+// import { Wallets } from './pages/Wallets'
 import { Tokens, TokenDetail } from './pages/Tokens'
 import { Leaderboard } from './pages/Leaderboard'
 import { Feed } from './pages/Feed'
@@ -13,7 +13,11 @@ import { Alerts } from './pages/Alerts'
 import { AIAnalyst } from './pages/AIA'
 import { Social } from './pages/Social'
 import { PumpFun } from './pages/PumpFun'
-import { PumpFunBullish } from './pages/PumpFunBullish'
+// import { PumpFunBullish } from './pages/PumpFunBullish'
+// import { LaunchVelocity } from './pages/LaunchVelocity'
+// import { AntiRugShield } from './pages/AntiRugShield'
+// import { WhaleRadar } from './pages/WhaleRadar'
+// import { TradingCharts } from './pages/TradingCharts'
 import { SolanaWallet } from './pages/SolanaWallet'
 import { SocialMonitor } from './pages/SocialMonitor'
 
@@ -53,7 +57,7 @@ export default function App(){
       <Layout>
         <Routes>
           <Route path="/" element={<Home/>} />
-          <Route path="/wallets" element={<Wallets/>} />
+          {/* <Route path="/wallets" element={<Wallets/>} /> */}
           <Route path="/wallet/:address" element={<WalletProfile/>} />
           <Route path="/tokens" element={<Tokens/>} />
           <Route path="/token/:address" element={<TokenDetail/>} />
@@ -66,7 +70,11 @@ export default function App(){
           <Route path="/ai" element={<AIAnalyst/>} />
           <Route path="/social" element={<Social/>} />
           <Route path="/pumpfun" element={<PumpFun/>} />
-          <Route path="/pumpfun-bullish" element={<PumpFunBullish/>} />
+          <Route path="/pumpfun-bullish" element={<div>Coming Soon</div>} />
+          {/* <Route path="/launch-velocity" element={<LaunchVelocity/>} /> */}
+          {/* <Route path="/anti-rug" element={<AntiRugShield/>} /> */}
+          {/* <Route path="/whale-radar" element={<WhaleRadar/>} /> */}
+          {/* <Route path="/trading-charts" element={<TradingCharts/>} /> */}
           <Route path="/social-monitor" element={<SocialMonitor/>} />
           <Route path="/sw/:address" element={<SolanaWallet/>} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,46 @@
+import { useEffect, useState, useCallback } from 'react'
+import { pumpPortalLive } from '../lib/providers/pumpportal'
+
+export function WhaleRadar() {
+  const [alerts, setAlerts] = useState<string[]>([])
+
+  useEffect(() => {
+    pumpPortalLive.start()
+    const unsubToken = pumpPortalLive.subscribe((snap) => {
+      const wallets = snap.wallets || []
+      for (const w of wallets) {
+        if (w.score > 70 && w.graduated >= 3) {
+          const msg = `🐋 Smart Money Alert: Wallet ${w.address.slice(0,8)} (Score ${w.score}) — ${w.graduated}/${w.created} graduated`
+          setAlerts(prev => [msg, ...prev].slice(0, 20))
+        }
+      }
+    })
+    return () => unsubToken()
+  }, [])
+
+  return (
+    <div style={{ display: 'grid', gap: 14, paddingBottom: 40 }}>
+      <div className="card" style={{ padding: 16 }}>
+        <div style={{ fontWeight: 900, fontSize: 18 }}>WHALE RADAR • SMART MONEY ALERTS</div>
+        <div style={{ fontSize: 12, color: '#7d8aa6', marginTop: 6 }}>
+          Real-time detection of elite wallets (Guru Score &gt; 70, 3+ graduations) active in PumpFun. When a whale wallet creates or graduates a new token, this alert fires. Actionable signal.
+        </div>
+      </div>
+      <div className="card" style={{ padding: 14 }}>
+        <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 10 }}>LIVE ALERTS</div>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {alerts.length === 0 ? (
+            <div style={{ padding: 20, textAlign: 'center', color: '#7d8aa6' }}>Waiting for whale activity... Connect live PumpPortal feed.</div>
+          ) : (
+            alerts.map((a, i) => (
+              <div key={i} style={{ padding: 12, borderRadius: 10, background: 'rgba(184,255,51,0.06)', border: '1px solid rgba(184,255,51,0.18)' }}>
+                <div style={{ fontSize: 14, color: '#b8ff33', fontWeight: 700 }}>{a}</div>
+                <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>Detected: {new Date().toLocaleTimeString()}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

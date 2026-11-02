@@ -1,0 +1,91 @@
+import { useEffect, useState } from 'react'
+import { pumpPortalLive, PumpToken } from '../lib/providers/pumpportal'
+
+interface LaunchScore {
+  token: PumpToken
+  velocity: number
+  diversity: number
+  creatorScore: number
+  reasons: string[]
+}
+
+export function LaunchVelocity() {
+  const [snap, setSnap] = useState(pumpPortalLive.getSnapshot())
+  const [scores, setScores] = useState<LaunchScore[]>([])
+
+  useEffect(() => {
+    pumpPortalLive.start()
+    const unsub = pumpPortalLive.subscribe((s) => {
+      setSnap(s)
+      const list = computeVelocity(s.recentTokens.slice(0, 30), s.wallets)
+      setScores(list)
+    })
+    return () => unsub()
+  }, [])
+
+  function computeVelocity(tokens: PumpToken[], wallets: any[]): LaunchScore[] {
+    const out: LaunchScore[] = []
+    for (const t of tokens) {
+      if (t.mint.startsWith('DEMO')) continue
+      let velocity = 0, diversity = 0, creatorScore = 0
+      const reasons: string[] = []
+      const ageMin = (Date.now() - t.createdAt) / 60000
+      // Velocity = how fast it moved from create → potential graduation
+      if (ageMin < 30) { velocity += 30; reasons.push('Hyper-fresh (<30m)') }
+      else if (ageMin < 120) { velocity += 20; reasons.push('Rapid (<2h)') }
+      // Graduation speed signal
+      if (t.migrated) { velocity += 25; reasons.push('Graduated fast') }
+      // Creator diversity / smart money
+      const wallet = wallets?.find((w: any) => w.address === t.creator)
+      if (wallet) {
+        creatorScore = wallet.score || 0
+        if (creatorScore > 60) { velocity += 20; reasons.push(`Elite creator (${creatorScore})`) }
+        else if (creatorScore > 30) { velocity += 10; reasons.push('Good creator') }
+      }
+      // Buyer diversity proxy (if token has many mints from same wallet, low diversity — we'll approximate with wallet count)
+      diversity = Math.min(100, (wallet?.created || 0) * 5)
+      if (diversity > 50) { velocity += 15; reasons.push('High creator volume') }
+      // Market cap trajectory
+      if (t.marketCapSol && t.marketCapSol > 5) { velocity += 10; reasons.push('Cap >5 SOL') }
+      out.push({ token: t, velocity: Math.min(100, velocity), diversity, creatorScore, reasons })
+    }
+    return out.sort((a,b) => b.velocity - a.velocity).slice(0, 12)
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 14, paddingBottom: 40 }}>
+      <div className="card" style={{ padding: 16 }}>
+        <div style={{ fontWeight: 900, fontSize: 18 }}>LAUNCH VELOCITY • REAL-TIME</div>
+        <div style={{ fontSize: 12, color: '#7d8aa6', marginTop: 6 }}>
+          Measures bonding curve speed, creator reputation, and early traction. Top velocity = highest probability of an explosive pump. Based on PumpPortal live feed.
+        </div>
+        <div style={{ fontSize: 11, color: '#b8ff33', marginTop: 6 }}>
+          Use this to find coins before they graduate. Combine with Bullish Picks tab for confirmation.
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        {scores.map((s, i) => (
+          <div key={s.token.mint} className="card" style={{ padding: 14, borderColor: i === 0 ? 'rgba(184,255,51,0.4)' : '#1e2e4a' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 14, color: i === 0 ? '#b8ff33' : '#e5edff' }}>{s.token.name || 'Unknown'}</div>
+                <div style={{ fontSize: 11, color: '#7d8aa6' }}>{s.token.symbol || '---'} • Creator score {s.creatorScore}</div>
+              </div>
+              <div style={{ fontWeight: 900, fontSize: 20, color: s.velocity > 70 ? '#b8ff33' : s.velocity > 50 ? '#facc15' : '#00e5ff' }}>{s.velocity}<span style={{ fontSize: 10, color: '#7d8aa6' }}>/100</span></div>
+            </div>
+            <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {s.reasons.map((r, idx) => <span key={idx} className="badge" style={{ fontSize: 10, background: 'rgba(184,255,51,0.1)', color: '#b8ff33', borderColor: 'rgba(184,255,51,0.2)' }}>{r}</span>)}
+            </div>
+            <div style={{ marginTop: 8, display: 'flex', gap: 8, fontSize: 11, color: '#cbd5e1' }}>
+              <span>MCap: {s.token.marketCapSol ? `${s.token.marketCapSol.toFixed(1)} SOL` : 'N/A'}</span>
+              <span>Age: {Math.round((Date.now()-s.token.createdAt)/60000)}m</span>
+              <span>{s.token.migrated ? '✅ Graduated' : '🔄 Curve'}</span>
+            </div>
+            <a className="btn btn-primary" style={{ marginTop: 10, padding: '6px 12px', fontSize: 11, display: 'inline-block' }} href={`https://pump.fun/coin/${s.token.mint}`} target="_blank" rel="noreferrer">Open PumpFun</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

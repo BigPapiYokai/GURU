@@ -29,7 +29,7 @@ type TweetCallback = (tweet: Tweet) => void
 type ErrorCallback = (error: Error) => void
 type StatusCallback = (status: 'connecting' | 'live' | 'demo' | 'error') => void
 
-const BEARER_TOKEN = (import.meta as any).env?.VITE_TWITTER_BEARER_TOKEN as string | undefined
+const BEARER_TOKEN = '1207765792848109568-yTyxwbA4yL9dhsHFh8SOzqUTEmAFRJ'
 
 const ACCOUNT_IDS: Record<string, string> = {
   realDonaldTrump: '25073877',

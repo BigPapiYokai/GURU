@@ -1,0 +1,83 @@
+import { useEffect, useState } from 'react'
+import { pumpPortalLive, PumpToken } from '../lib/providers/pumpportal'
+
+interface ShieldScore {
+  token: PumpToken
+  risk: number // lower = safer
+  score: number // higher = more bullish / lower risk
+  flags: string[]
+}
+
+export function AntiRugShield() {
+  const [snap, setSnap] = useState(pumpPortalLive.getSnapshot())
+  const [ratings, setRatings] = useState<ShieldScore[]>([])
+
+  useEffect(() => {
+    pumpPortalLive.start()
+    const unsub = pumpPortalLive.subscribe((s) => {
+      setSnap(s)
+      setRatings(computeShield(s.recentTokens.slice(0, 30)))
+    })
+    return () => unsub()
+  }, [])
+
+  function computeShield(tokens: PumpToken[]): ShieldScore[] {
+    const out: ShieldScore[] = []
+    for (const t of tokens) {
+      if (t.mint.startsWith('DEMO')) continue
+      let risk = 0, score = 50
+      const flags: string[] = []
+
+      // Creator has no graduates = high risk
+      const wallet = snap.wallets?.find((w: any) => w.address === t.creator)
+      if (!wallet || wallet.graduated === 0) { risk += 30; flags.push('No graduation history') }
+      else if (wallet.gradRate < 10) { risk += 15; flags.push('Low graduation rate') }
+      else { score += 15; flags.push('Proven creator') }
+
+      // Fresh token with huge market cap = suspicious
+      const ageMin = (Date.now() - t.createdAt) / 60000
+      if (ageMin < 30 && t.marketCapSol && t.marketCapSol > 20) { risk += 25; flags.push('Early oversized cap') }
+
+      // Graduated = lower risk
+      if (t.migrated) { risk -= 20; flags.push('Graduated') }
+
+      // Symbol length / spammy patterns
+      if ((t.symbol || '').length < 2 || (t.symbol || '').length > 8) { risk += 5; flags.push('Suspicious ticker') }
+
+      // High confidence if creator is top-tier AND graduated
+      if (wallet && wallet.score > 70 && t.migrated) score += 30
+
+      out.push({ token: t, risk: Math.max(0, risk), score: Math.min(100, score), flags })
+    }
+    return out.sort((a,b) => a.risk - b.risk).slice(0, 12)
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 14, paddingBottom: 40 }}>
+      <div className="card" style={{ padding: 16 }}>
+        <div style={{ fontWeight: 900, fontSize: 18 }}>ANTI-RUG SHIELD • RISK ANALYSIS</div>
+        <div style={{ fontSize: 12, color: '#7d8aa6', marginTop: 6 }}>
+          Multi-factor risk scoring for PumpFun tokens. Combines creator graduation history, market cap trajectory, graduation status, and ticker patterns. Lower risk = healthier investment. Not guaranteed.
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        {ratings.map((r, i) => (
+          <div key={r.token.mint} className="card" style={{ padding: 14, borderColor: r.risk < 20 ? 'rgba(184,255,51,0.3)' : r.risk < 40 ? '#facc15' : '#ef4444', background: r.risk < 20 ? 'rgba(184,255,51,0.05)' : 'rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 14 }}>{r.token.name || 'Unknown'}</div>
+                <div style={{ fontSize: 11, color: '#7d8aa6' }}>{r.token.symbol || '---'}</div>
+              </div>
+              <div style={{ fontWeight: 900, fontSize: 18, color: r.risk < 20 ? '#b8ff33' : r.risk < 40 ? '#facc15' : '#ef4444' }}>{r.risk}<span style={{ fontSize: 10, color: '#7d8aa6' }}> risk</span></div>
+            </div>
+            <div style={{ marginTop: 8, fontSize: 11, color: '#cbd5e1', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {r.flags.map((f, idx) => <span key={idx} className="badge" style={{ fontSize: 9, background: 'rgba(255,255,255,0.05)' }}>{f}</span>)}
+            </div>
+            <a className="btn btn-ghost" style={{ marginTop: 10, padding: '6px 12px', fontSize: 11, display: 'inline-block' }} href={`https://pump.fun/coin/${r.token.mint}`} target="_blank" rel="noreferrer">View Coin</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

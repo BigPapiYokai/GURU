@@ -397,6 +397,9 @@ export function SocialMonitor() {
             <textarea value={config.keywords.join(', ')} onChange={e => updateConfig('keywords', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} style={{ width: '100%', maxWidth: 600, minHeight: 80, background: '#0a0f1c', border: '1px solid #1e2e4a', color: '#e5edff', padding: '8px 10px', borderRadius: 8, fontSize: 12, fontFamily: 'monospace', resize: 'vertical' }} />
             <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>Keywords are matched against tweet text AND token name/symbol/description</div>
           </div>
+        </div>
+      </div>
+
       <div className="card" style={{ padding: 14, marginTop: 14 }}>
         <div style={{ fontWeight: 800, fontSize: 12, color: '#ff2e9d' }}>DISCORD & SMS NOTIFICATIONS</div>
         <div style={{ display: 'grid', gap: 12, marginTop: 10 }}>

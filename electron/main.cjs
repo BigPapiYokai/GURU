@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, shell, ipcMain, Notification, nativeImage } = 
 const path = require('path');
 const fs = require('fs');
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow = null;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -111,7 +111,7 @@ app.whenReady().then(() => {
   });
 });
 
-function playSound(type: 'alert' | 'match' | 'custom') {
+function playSound(type) {
   // Use system beep as fallback, or play audio file if available
   try {
     if (type === 'alert') {
