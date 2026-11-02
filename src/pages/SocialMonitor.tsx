@@ -34,6 +34,10 @@ export function SocialMonitor() {
         enabled: true,
         soundEnabled: true,
         desktopNotifications: true,
+        discordNotifications: false,
+        smsNotifications: false,
+        discordWebhook: '',
+        smsPhoneNumber: '',
         keywords: ['trump', 'musk', 'elon', 'doge', 'bitcoin', 'crypto', 'solana', 'pump', 'launch', 'token', 'coin', 'meme'],
         accounts: ['realDonaldTrump', 'elonmusk'],
       }
@@ -42,6 +46,10 @@ export function SocialMonitor() {
       enabled: true,
       soundEnabled: true,
       desktopNotifications: true,
+      discordNotifications: false,
+      smsNotifications: false,
+      discordWebhook: '',
+      smsPhoneNumber: '',
       keywords: ['trump', 'musk', 'elon', 'doge', 'bitcoin', 'crypto', 'solana', 'pump', 'launch', 'token', 'coin', 'meme'],
       accounts: ['realDonaldTrump', 'elonmusk'],
     }}
@@ -101,7 +109,14 @@ export function SocialMonitor() {
             tag: tweet.id,
           })
         }
-      } else if (config.soundEnabled) {
+      }
+      if (config.discordNotifications) {
+        await sendDiscordNotification(tweet, config.discordWebhook)
+      }
+      if (config.smsNotifications) {
+        await sendSmsNotification(tweet, config.smsPhoneNumber)
+      }
+      if (!config.desktopNotifications && !config.discordNotifications && !config.smsNotifications && config.soundEnabled) {
         PlaySound.alert()
       }
 
@@ -121,7 +136,7 @@ export function SocialMonitor() {
       service.stop()
       serviceRef.current = null
     }
-  }, [config.enabled, config.pollInterval, config.accounts, config.keywords, config.desktopNotifications, config.soundEnabled])
+  }, [config.enabled, config.pollInterval, config.accounts, config.keywords, config.desktopNotifications, config.soundEnabled, config.discordNotifications, config.smsNotifications, config.discordWebhook, config.smsPhoneNumber])
 
   async function checkCoinMatches(tweet: Tweet) {
     const snap = pumpSnapRef.current
@@ -382,6 +397,35 @@ export function SocialMonitor() {
             <textarea value={config.keywords.join(', ')} onChange={e => updateConfig('keywords', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} style={{ width: '100%', maxWidth: 600, minHeight: 80, background: '#0a0f1c', border: '1px solid #1e2e4a', color: '#e5edff', padding: '8px 10px', borderRadius: 8, fontSize: 12, fontFamily: 'monospace', resize: 'vertical' }} />
             <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>Keywords are matched against tweet text AND token name/symbol/description</div>
           </div>
+      <div className="card" style={{ padding: 14, marginTop: 14 }}>
+        <div style={{ fontWeight: 800, fontSize: 12, color: '#ff2e9d' }}>DISCORD & SMS NOTIFICATIONS</div>
+        <div style={{ display: 'grid', gap: 12, marginTop: 10 }}>
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+              <input type="checkbox" checked={config.discordNotifications} onChange={e => updateConfig('discordNotifications', e.target.checked)} /> Discord Notifications
+            </label>
+            <input
+              type="text"
+              value={config.discordWebhook}
+              onChange={e => updateConfig('discordWebhook', e.target.value)}
+              placeholder="https://discord.com/api/webhooks/YOUR/WEBHOOK-ID/YOUR-TOKEN"
+              style={{ width: '100%', maxWidth: 600, marginTop: 8, background: '#0a0f1c', border: '1px solid #1e2e4a', color: '#e5edff', padding: '8px 10px', borderRadius: 8, fontSize: 12 }}
+            />
+            <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>Discord webhook URL for sending notifications</div>
+          </div>
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+              <input type="checkbox" checked={config.smsNotifications} onChange={e => updateConfig('smsNotifications', e.target.checked)} /> SMS Notifications
+            </label>
+            <input
+              type="text"
+              value={config.smsPhoneNumber}
+              onChange={e => updateConfig('smsPhoneNumber', e.target.value)}
+              placeholder="+1234567890"
+              style={{ width: '100%', maxWidth: 200, marginTop: 8, background: '#0a0f1c', border: '1px solid #1e2e4a', color: '#e5edff', padding: '8px 10px', borderRadius: 8, fontSize: 12 }}
+            />
+            <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>Phone number for SMS alerts (e.g., +1234567890)</div>
+          </div>
         </div>
       </div>
 
@@ -394,8 +438,48 @@ export function SocialMonitor() {
           <li>Sound alerts use Web Audio API — works in Electron and modern browsers</li>
           <li>Cross-referencing runs locally — matches tweet keywords against live PumpFun token metadata</li>
           <li>Demo mode shows simulated data when API not configured</li>
+          <li><strong>Discord:</strong> Set <code className="mono" style={{color:'#b8ff33'}}>VITE_DISCORD_WEBHOOK_URL</code> in .env or enter webhook URL below</li>
+          <li><strong>SMS:</strong> Set <code className="mono" style={{color:'#b8ff33'}}>VITE_TWILIO_ACCOUNT_SID</code>, <code className="mono" style={{color:'#b8ff33'}}>VITE_TWILIO_AUTH_TOKEN</code>, <code className="mono" style={{color:'#b8ff33'}}>VITE_TWILIO_FROM_NUMBER</code> in .env</li>
         </ul>
       </div>
     </div>
   )
+
+  async function sendSmsNotification(tweet: Tweet, phoneNumber: string) {
+    if (!phoneNumber) return
+    try {
+      const sid = (import.meta as any).env?.VITE_TWILIO_ACCOUNT_SID || process.env.VITE_TWILIO_ACCOUNT_SID
+      const token = (import.meta as any).env?.VITE_TWILIO_AUTH_TOKEN || process.env.VITE_TWILIO_AUTH_TOKEN
+      const from = (import.meta as any).env?.VITE_TWILIO_FROM_NUMBER || process.env.VITE_TWILIO_FROM_NUMBER
+      if (!sid || !token || !from) { console.log('Twilio credentials missing'); return }
+      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${btoa(sid + ':' + token)}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ To: phoneNumber, From: from, Body: `New GURU tweet alert: @${tweet.authorHandle} - ${tweet.text.slice(0, 200)}` }).toString(),
+      })
+      if (response.ok) console.log(`SMS sent to ${phoneNumber}`)
+      else console.error(`SMS failed: ${response.status}`)
+    } catch (e) { console.error('SMS error:', e) }
+  }
+
+  async function sendDiscordNotification(tweet: Tweet, webhookUrl: string) {
+    if (!webhookUrl) return
+    try {
+      const payload = {
+        content: `🚀 New GURU tweet alert: @${tweet.authorHandle} — ${tweet.text.slice(0, 200)}`,
+        username: 'GURU Monitor',
+        icon_emoji: '🚀',
+      }
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (res.ok) console.log('Discord alert sent')
+      else console.error('Discord webhook failed:', res.status)
+    } catch (e) { console.error('Discord error:', e) }
+  }
 }

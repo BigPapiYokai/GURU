@@ -17,6 +17,10 @@ export interface MonitorConfig {
   enabled: boolean
   soundEnabled: boolean
   desktopNotifications: boolean
+  discordNotifications: boolean
+  smsNotifications: boolean
+  discordWebhook: string
+  smsPhoneNumber: string
   keywords: string[]
   accounts: string[]
 }

@@ -13,6 +13,7 @@ import { Alerts } from './pages/Alerts'
 import { AIAnalyst } from './pages/AIA'
 import { Social } from './pages/Social'
 import { PumpFun } from './pages/PumpFun'
+import { PumpFunBullish } from './pages/PumpFunBullish'
 import { SolanaWallet } from './pages/SolanaWallet'
 import { SocialMonitor } from './pages/SocialMonitor'
 
@@ -65,6 +66,7 @@ export default function App(){
           <Route path="/ai" element={<AIAnalyst/>} />
           <Route path="/social" element={<Social/>} />
           <Route path="/pumpfun" element={<PumpFun/>} />
+          <Route path="/pumpfun-bullish" element={<PumpFunBullish/>} />
           <Route path="/social-monitor" element={<SocialMonitor/>} />
           <Route path="/sw/:address" element={<SolanaWallet/>} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -182,7 +182,7 @@ export interface AlertConfig {
   threshold?:number
   walletAddress?:string
   tokenAddress?:string
-  channel:'browser'|'email'|'telegram'|'discord'
+  channel:'browser'|'email'|'telegram'|'discord'|'sms'
 }
 
 // Social / Watchlists
